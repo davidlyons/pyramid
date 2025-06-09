@@ -54,21 +54,26 @@
 
     <div id="loading">Loading...</div>
 
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/build/three.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/js/libs/inflate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/js/loaders/FBXLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/js/modifiers/SubdivisionModifier.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/js/WebGL.js"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script> -->
-    <script src="https://cdn.jsdelivr.net/gh/tweenjs/tween.js@v16.7.1/src/Tween.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+          "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm",
+          "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.2/build/index.module.js"
+        }
+      }
+    </script>
 
     <script src="https://davidlyons.dev/sketches/info.js"></script>
 
-    <script>
-      if (THREE.WEBGL.isWebGLAvailable() === false) {
-        document.body.appendChild(THREE.WEBGL.getWebGLErrorMessage());
-      }
+    <script type="module">
+      import * as THREE from 'three'
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+      import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+      import { LoopSubdivision } from 'three-subdivide';
+      import TWEEN from 'three/addons/libs/tween.module.js'
+      // import { GUI } from 'lil-gui'
 
       if (Info) {
         var info = new Info(
@@ -136,7 +141,7 @@
         camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
         camera.position.set(90, 150, 400);
 
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls = new OrbitControls(camera, renderer.domElement);
         controls.minPolarAngle = Math.PI / 8;
         controls.maxPolarAngle = Math.PI / 2;
         controls.enablePan = false;
@@ -163,7 +168,7 @@
         };
 
         var textureLoader = new THREE.TextureLoader();
-        var fbxLoader = new THREE.FBXLoader();
+        var fbxLoader = new FBXLoader();
 
         // var axisHelper = new THREE.AxesHelper( 100 );
         // scene.add( axisHelper );
@@ -171,7 +176,7 @@
         var alight = new THREE.AmbientLight(0x404040); // soft white light
         scene.add(alight);
 
-        var keyLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        var keyLight = new THREE.DirectionalLight(0xffffff, 1);
         keyLight.position.set(1, 1, 1).multiplyScalar(100);
         scene.add(keyLight);
 
@@ -232,24 +237,23 @@
         // http://www.html5rocks.com/en/tutorials/casestudies/oz/
 
         var pointCount = 400;
-        var pointsGeo = new THREE.Geometry();
+        var positions = new Float32Array(pointCount * 3);
+
+        for (var p = 0; p < pointCount; p++) {
+          positions[p * 3] = THREE.MathUtils.randFloatSpread(500);
+          positions[p * 3 + 1] = THREE.MathUtils.randFloat(0, 300 + FLOOR);
+          positions[p * 3 + 2] = THREE.MathUtils.randFloatSpread(500);
+        }
+
+        var pointsGeo = new THREE.BufferGeometry();
+        pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
         var pointsMat = new THREE.PointsMaterial({
           color: 0x7a5d43,
           size: 2,
         });
 
-        for (var p = 0; p < pointCount; p++) {
-          var point = new THREE.Vector3(
-            THREE.Math.randFloatSpread(500),
-            THREE.Math.randFloat(0, 300 + FLOOR),
-            THREE.Math.randFloatSpread(500)
-          );
-
-          pointsGeo.vertices.push(point);
-        }
-
         points = new THREE.Points(pointsGeo, pointsMat);
-        points.sortParticles = true;
         scene.add(points);
 
         // ------------------------------------------------------------
@@ -282,7 +286,7 @@
           map: sandColor,
         });
 
-        var sandGeo = new THREE.PlaneBufferGeometry(4096, 4096, 1, 1);
+        var sandGeo = new THREE.PlaneGeometry(4096, 4096, 1, 1);
 
         var sand = new THREE.Mesh(sandGeo, sandMat);
         scene.add(sand);
@@ -291,15 +295,13 @@
 
         // ------------------------------------------------------------
 
-        var modifier = new THREE.SubdivisionModifier(1);
-
         fbxLoader.load('models/pyramid.fbx', function (fbx) {
           pyramid = fbx;
           pyramid.scale.setScalar(2);
           pyramid.position.y = FLOOR;
           scene.add(pyramid);
 
-          var pLight2 = new THREE.PointLight(0x00ffcc, 0.6, 500);
+          var pLight2 = new THREE.PointLight(0x00ffcc, 4, 280, 0.1);
           pLight2.position.set(0, 130, 0);
           pyramid.add(pLight2);
 
@@ -316,7 +318,7 @@
           var borders = pyramid.getObjectByName('borders');
           borders.material.specular.setHex(0xffffff);
           borders.side = THREE.DoubleSide;
-          borders.geometry = modifier.modify(borders.geometry);
+          borders.geometry = LoopSubdivision.modify(borders.geometry, 1);
 
           // --------------------------------------------------------
 
@@ -324,8 +326,8 @@
 
           var pyramidTop = pyramid.getObjectByName('pyramidTop');
 
-          var pLight = new THREE.PointLight(0x00ffcc, 0.6, 500);
-          pLight.position.y = -28;
+          var pLight = new THREE.PointLight(0x00ffcc, 4, 180, 0.1);
+          pLight.position.y = -13;
           pyramidTop.add(pLight);
 
           // var plh = new THREE.PointLightHelper( pLight, 25 );
@@ -334,12 +336,14 @@
           // var ah = new THREE.AxesHelper( 50 );
           // pyramidTop.add( ah );
 
+          pyramidTop.position.y += 3;
+
           var tween = new TWEEN.Tween(pyramidTop.position)
             .to({ y: pyramidTop.position.y + 15 }, 1500)
             .easing(TWEEN.Easing.Cubic.InOut);
 
           var tween2 = new TWEEN.Tween(pyramidTop.position)
-            .to({ y: pyramidTop.position.y + 3 }, 1500)
+            .to({ y: pyramidTop.position.y }, 1500)
             .easing(TWEEN.Easing.Cubic.InOut);
 
           tween.chain(tween2);
@@ -353,7 +357,7 @@
           for (var i = 1; i <= 8; i++) {
             var speaker = pyramid.getObjectByName('speaker' + i);
             speaker.material = speaker.material.clone();
-            speaker.geometry = modifier.modify(speaker.geometry);
+            speaker.geometry = LoopSubdivision.modify(speaker.geometry, 1);
 
             // assign sound to speaker
 
@@ -439,7 +443,7 @@
 
         // --------------------------------------------------------
 
-        // var gui = new dat.GUI();
+        // var gui = new GUI();
 
         // var opts = {
         // 	spriteScale: sprite.scale.x
@@ -451,7 +455,6 @@
         // gui.add(camera, 'fov', 10, 135).onChange(function(){
         // 	camera.updateProjectionMatrix();
         // });
-        // gui.add(brickMaterial, 'shininess', 1, 30);
 
         // var f1 = gui.addFolder('fog');
         // f1.add(scene.fog, 'near', 1, 1000);
