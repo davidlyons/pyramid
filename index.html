@@ -51,7 +51,6 @@
         padding: 16px;
         left: 16px;
         bottom: 16px;
-        display: inline-block;
         opacity: 0.6;
         transition: opacity 0.15s cubic-bezier(.4, 0, .2, 1);
       }
@@ -97,6 +96,10 @@
       import { LoopSubdivision } from 'three-subdivide';
       import TWEEN from 'three/addons/libs/tween.module.js'
       // import { GUI } from 'lil-gui'
+
+      if (new URLSearchParams(window.location.search).has('embed')) {
+        document.getElementById('home').hidden = true;
+      }
 
       var container;
 
