@@ -80,10 +80,10 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
           "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm",
-          "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.2/build/index.module.js"
+          "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.5/build/index.module.js"
         }
       }
     </script>
@@ -91,7 +91,7 @@
     <script type="module">
       import * as THREE from 'three'
       import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-      import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       import { LoopSubdivision } from 'three-subdivide';
       import TWEEN from 'three/addons/libs/tween.module.js'
       // import { GUI } from 'lil-gui'
@@ -179,7 +179,7 @@
         };
 
         var textureLoader = new THREE.TextureLoader();
-        var fbxLoader = new FBXLoader();
+        var gltfLoader = new GLTFLoader();
 
         // var axisHelper = new THREE.AxesHelper( 100 );
         // scene.add( axisHelper );
@@ -306,29 +306,64 @@
 
         // ------------------------------------------------------------
 
-        fbxLoader.load('models/pyramid.fbx', function (fbx) {
-          pyramid = fbx;
-          pyramid.scale.setScalar(2);
+        // materials
+
+        const colorMap = textureLoader.load('models/pyramid-color.jpg')
+        const normalMap = textureLoader.load('models/pyramid-normal.jpg')
+        const specMap = textureLoader.load('models/pyramid-spec.jpg')
+        colorMap.flipY = false;
+        normalMap.flipY = false;
+        specMap.flipY = false;
+
+        const baseMaterial = new THREE.MeshPhongMaterial({
+          color: new THREE.Color().setRGB(0.6, 0.6, 0.6),
+          map: colorMap,
+          normalMap: normalMap,
+          normalScale: { x: 1, y: -1 },
+          specularMap: specMap,
+          specular: 0xffffff,
+          shininess: 7,
+          side: THREE.DoubleSide
+        })
+
+        const speakerMaterial = new THREE.MeshPhongMaterial({
+          color: new THREE.Color().setRGB(0.258, 0.172, 0.083),
+          specular: 0xffffff,
+          shininess: 7,
+        })
+
+        const bordersMaterial = new THREE.MeshPhongMaterial({
+          color: new THREE.Color().setRGB(0.603, 0.412, 0.215),
+          specular: 0xffffff,
+          shininess: 10,
+          side: THREE.DoubleSide
+        })
+
+        // model
+
+        const gltf = gltfLoader.load('models/pyramid.glb', function(gltf) {
+          pyramid = gltf.scene.children[0];
           pyramid.position.y = FLOOR;
           scene.add(pyramid);
 
           var pLight2 = new THREE.PointLight(0x00ffcc, 4, 280, 0.1);
-          pLight2.position.set(0, 130, 0);
+          pLight2.position.set(0, 260, 0);
           pyramid.add(pLight2);
 
-          // var plh2 = new THREE.PointLightHelper( pLight2, 25 );
+          // var plh2 = new THREE.PointLightHelper( pLight2, 50 );
           // scene.add( plh2 );
 
-          var speaker1 = pyramid.getObjectByName('speaker1');
-          speaker1.material.specular.setHex(0xffffff);
+          pyramid.traverse(function (obj) {
+            if (obj.name.startsWith('speaker')) {
+              obj.material = speakerMaterial;
+            }
+          });
 
           var base = pyramid.getObjectByName('pyramidBase');
-          base.material.specular.setHex(0xffffff);
-          base.side = THREE.DoubleSide;
+          base.material = baseMaterial;
 
           var borders = pyramid.getObjectByName('borders');
-          borders.material.specular.setHex(0xffffff);
-          borders.side = THREE.DoubleSide;
+          borders.material = bordersMaterial;
           borders.geometry = LoopSubdivision.modify(borders.geometry, 1);
 
           // --------------------------------------------------------
@@ -336,12 +371,13 @@
           // top
 
           var pyramidTop = pyramid.getObjectByName('pyramidTop');
+          pyramidTop.material = baseMaterial;
 
           var pLight = new THREE.PointLight(0x00ffcc, 4, 180, 0.1);
-          pLight.position.y = -13;
+          pLight.position.y = -26;
           pyramidTop.add(pLight);
 
-          // var plh = new THREE.PointLightHelper( pLight, 25 );
+          // var plh = new THREE.PointLightHelper( pLight, 50 );
           // scene.add( plh );
 
           // var ah = new THREE.AxesHelper( 50 );
@@ -405,19 +441,10 @@
 
             var normal = new THREE.Vector3(0.6457077325259278, 0.40832318480986296, 0.6452392586498092);
 
-            speaker.geometry.computeBoundingBox();
-            var boundingBox = speaker.geometry.boundingBox;
-            var centerX = 0.5 * (boundingBox.max.x + boundingBox.min.x);
-            var centerZ = 0.5 * (boundingBox.max.z + boundingBox.min.z);
+            normal.x *= speaker.position.x > 0 ? 1 : -1;
+            normal.z *= speaker.position.z > 0 ? 1 : -1;
 
-            normal.x *= centerX > 0 ? 1 : -1;
-            normal.z *= centerZ > 0 ? 1 : -1;
-
-            // arrow helpers
-
-            // var centerY = 0.5 * ( boundingBox.max.y + boundingBox.min.y );
-            // var center = new THREE.Vector3( centerX, centerY, centerZ);
-            // var arrow = new THREE.ArrowHelper(normal, center, 100, 0xff0000);
+            // var arrow = new THREE.ArrowHelper(normal, speaker.position, 100, 0xff0000);
             // pyramid.add( arrow );
 
             // ------------------------------
@@ -557,7 +584,7 @@
           if (INTERSECTED != intersects[0].object) {
             if (INTERSECTED) {
               INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-              container.style.cursor = 'auto';
+              renderer.domElement.style.cursor = 'auto';
             }
 
             INTERSECTED = intersects[0].object;
@@ -568,13 +595,13 @@
             if (INTERSECTED.name.startsWith('speaker')) {
               INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
               INTERSECTED.material.emissive.setHex(0x004f3f);
-              container.style.cursor = 'pointer';
+              renderer.domElement.style.cursor = 'pointer';
             }
           }
         } else {
           if (INTERSECTED) {
             INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-            container.style.cursor = 'auto';
+            renderer.domElement.style.cursor = 'auto';
           }
 
           INTERSECTED = null;
