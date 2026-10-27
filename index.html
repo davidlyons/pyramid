@@ -11,8 +11,6 @@
     <meta name="description" content="" />
     <meta name="author" content="" />
 
-    <link href="https://davidlyons.dev/sketches/info.css" rel="stylesheet">
-
     <style>
       * {
         box-sizing: border-box;
@@ -46,26 +44,51 @@
         left: 50%;
         margin-left: -200px !important;
       }
+
+      #home {
+        color: #fff;
+        position: absolute;
+        padding: 16px;
+        left: 16px;
+        bottom: 16px;
+        display: inline-block;
+        opacity: 0.6;
+        transition: opacity 0.15s cubic-bezier(.4, 0, .2, 1);
+      }
+
+      #home:hover {
+        opacity: 1;
+      }
+
+      #home img {
+        width: 24px;
+        height: 24px;
+      }
     </style>
   </head>
 
   <body>
     <div id="container"></div>
 
+    <a href="https://davidlyons.dev" id="home" target="_blank" aria-label="Go to https://davidlyons.dev" title="davidlyons.dev">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house">
+        <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/>
+        <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      </svg>
+    </a>
+
     <div id="loading">Loading...</div>
 
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/",
           "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm",
           "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.2/build/index.module.js"
         }
       }
     </script>
-
-    <script src="https://davidlyons.dev/sketches/info.js"></script>
 
     <script type="module">
       import * as THREE from 'three'
@@ -74,20 +97,6 @@
       import { LoopSubdivision } from 'three-subdivide';
       import TWEEN from 'three/addons/libs/tween.module.js'
       // import { GUI } from 'lil-gui'
-
-      if (Info) {
-        var info = new Info(
-          'Sound Pyramid',
-          [
-            '<a href="https://davidlyons.dev">David Lyons</a>',
-            '<a href="pyramid-flash.jpg">Flash version screenshot</a>',
-            'Concept by Melody Neumann',
-            'Sand from <a href="http://www.textures.com/" target="_blank">textures.com</a>',
-            'Left mouse orbit, middle mouse zoom',
-            'Q,A,W,S keys to play notes',
-          ].join('<br>')
-        );
-      }
 
       var container;
 
