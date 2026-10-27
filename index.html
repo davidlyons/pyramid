@@ -25,17 +25,27 @@
         padding: 0;
         overflow: hidden;
         font-family: Arial, sans-serif;
-        font-size: 12px;
+        font-size: 15px;
         background: #e3cab3;
       }
 
       canvas {
         outline: none;
+        transition: opacity 500ms ease-in-out;
+      }
+
+      canvas.hidden {
+        opacity: 0;
       }
 
       #loading {
         padding: 10px;
         font-weight: bold;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       #webglmessage {
@@ -148,6 +158,8 @@
         renderer.setClearColor(0xe3cab3, 1);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        renderer.domElement.classList.add('hidden');
 
         camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
         camera.position.set(90, 150, 400);
@@ -165,7 +177,7 @@
 
         THREE.DefaultLoadingManager.onLoad = function () {
           document.body.removeChild(document.querySelector('#loading'));
-          container.appendChild(renderer.domElement);
+          renderer.domElement.classList.remove('hidden');
 
           sand.receiveShadow = true;
           pyramid.traverse(function (obj) {
