@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -62,7 +62,7 @@
         left: 16px;
         bottom: 16px;
         opacity: 0.6;
-        transition: opacity 0.15s cubic-bezier(.4, 0, .2, 1);
+        transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       #home:hover {
@@ -78,6 +78,7 @@
   <body>
     <div id="container"></div>
 
+    <!-- prettier-ignore -->
     <a href="https://davidlyons.dev" id="home" target="_blank" aria-label="Go to https://davidlyons.dev" title="davidlyons.dev">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house">
         <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/>
@@ -101,111 +102,111 @@
     <script type="module">
       import * as THREE from 'three'
       import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-      import { LoopSubdivision } from 'three-subdivide';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+      import { LoopSubdivision } from 'three-subdivide'
       import TWEEN from 'three/addons/libs/tween.module.js'
       // import { GUI } from 'lil-gui'
 
       if (new URLSearchParams(window.location.search).has('embed')) {
-        document.getElementById('home').hidden = true;
+        document.getElementById('home').hidden = true
       }
 
-      var container;
+      var container
 
-      var camera, controls, scene, renderer;
+      var camera, controls, scene, renderer
 
-      var pyramid;
+      var pyramid
 
-      var points;
-      var sprite;
+      var points
+      var sprite
 
-      var sounds = [];
+      var sounds = []
 
-      var mouse = new THREE.Vector2();
-      var INTERSECTED, SELECTED;
-      var raycaster = new THREE.Raycaster();
+      var mouse = new THREE.Vector2()
+      var INTERSECTED, SELECTED
+      var raycaster = new THREE.Raycaster()
 
-      var FLOOR = -100;
+      var FLOOR = -100
 
       // ---------------------------------------------
 
       var Sound = function (sources) {
-        this.audio = document.createElement('audio');
+        this.audio = document.createElement('audio')
 
         for (var i = 0; i < sources.length; i++) {
-          this.source = document.createElement('source');
-          this.source.src = sources[i];
-          this.audio.appendChild(this.source);
+          this.source = document.createElement('source')
+          this.source.src = sources[i]
+          this.audio.appendChild(this.source)
         }
-      };
+      }
 
       Sound.prototype.play = function () {
-        this.audio.load();
-        this.audio.play();
-      };
+        this.audio.load()
+        this.audio.play()
+      }
 
       // ---------------------------------------------
 
-      init();
+      init()
 
       function init() {
-        container = document.getElementById('container');
+        container = document.getElementById('container')
 
-        scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0xe3cab3, 500, 1000);
+        scene = new THREE.Scene()
+        scene.fog = new THREE.Fog(0xe3cab3, 500, 1000)
 
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setClearColor(0xe3cab3, 1);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        container.appendChild(renderer.domElement);
-        renderer.domElement.classList.add('hidden');
+        renderer = new THREE.WebGLRenderer({ antialias: true })
+        renderer.setClearColor(0xe3cab3, 1)
+        renderer.setPixelRatio(window.devicePixelRatio)
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        container.appendChild(renderer.domElement)
+        renderer.domElement.classList.add('hidden')
 
-        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
-        camera.position.set(90, 150, 400);
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000)
+        camera.position.set(90, 150, 400)
 
-        controls = new OrbitControls(camera, renderer.domElement);
-        controls.minPolarAngle = Math.PI / 8;
-        controls.maxPolarAngle = Math.PI / 2;
-        controls.enablePan = false;
-        controls.minDistance = 200;
-        controls.maxDistance = 700;
+        controls = new OrbitControls(camera, renderer.domElement)
+        controls.minPolarAngle = Math.PI / 8
+        controls.maxPolarAngle = Math.PI / 2
+        controls.enablePan = false
+        controls.minDistance = 200
+        controls.maxDistance = 700
 
         // THREE.DefaultLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
         //   console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
         // };
 
         THREE.DefaultLoadingManager.onLoad = function () {
-          document.body.removeChild(document.querySelector('#loading'));
-          renderer.domElement.classList.remove('hidden');
+          document.body.removeChild(document.querySelector('#loading'))
+          renderer.domElement.classList.remove('hidden')
 
-          sand.receiveShadow = true;
+          sand.receiveShadow = true
           pyramid.traverse(function (obj) {
             if (obj.isMesh) {
-              obj.castShadow = true;
-              obj.receiveShadow = true;
+              obj.castShadow = true
+              obj.receiveShadow = true
             }
-          });
+          })
 
-          loop();
-        };
+          loop()
+        }
 
-        var textureLoader = new THREE.TextureLoader();
-        var gltfLoader = new GLTFLoader();
+        var textureLoader = new THREE.TextureLoader()
+        var gltfLoader = new GLTFLoader()
 
         // var axisHelper = new THREE.AxesHelper( 100 );
         // scene.add( axisHelper );
 
-        var alight = new THREE.AmbientLight(0x404040); // soft white light
-        scene.add(alight);
+        var alight = new THREE.AmbientLight(0x404040) // soft white light
+        scene.add(alight)
 
-        var keyLight = new THREE.DirectionalLight(0xffffff, 1);
-        keyLight.position.set(1, 1, 1).multiplyScalar(100);
-        scene.add(keyLight);
+        var keyLight = new THREE.DirectionalLight(0xffffff, 1)
+        keyLight.position.set(1, 1, 1).multiplyScalar(100)
+        scene.add(keyLight)
 
-        var fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-        fillLight.position.set(-1, 0, -1).multiplyScalar(100);
-        scene.add(fillLight);
+        var fillLight = new THREE.DirectionalLight(0xffffff, 0.3)
+        fillLight.position.set(-1, 0, -1).multiplyScalar(100)
+        scene.add(fillLight)
 
         // shadows
 
@@ -241,16 +242,16 @@
           wireframe: true,
           transparent: true,
           opacity: 0.6,
-        });
+        })
 
-        var sphereGeo1 = new THREE.SphereGeometry(600, 20, 10);
-        var sphereGeo2 = new THREE.IcosahedronGeometry(700, 2);
+        var sphereGeo1 = new THREE.SphereGeometry(600, 20, 10)
+        var sphereGeo2 = new THREE.IcosahedronGeometry(700, 2)
 
-        var sphere1 = new THREE.Mesh(sphereGeo1, sphereMat);
-        var sphere2 = new THREE.Mesh(sphereGeo2, sphereMat);
+        var sphere1 = new THREE.Mesh(sphereGeo1, sphereMat)
+        var sphere2 = new THREE.Mesh(sphereGeo2, sphereMat)
 
-        scene.add(sphere1);
-        scene.add(sphere2);
+        scene.add(sphere1)
+        scene.add(sphere2)
 
         // ------------------------------------------------------------
 
@@ -259,62 +260,62 @@
         // maybe try this instead
         // http://www.html5rocks.com/en/tutorials/casestudies/oz/
 
-        var pointCount = 400;
-        var positions = new Float32Array(pointCount * 3);
+        var pointCount = 400
+        var positions = new Float32Array(pointCount * 3)
 
         for (var p = 0; p < pointCount; p++) {
-          positions[p * 3] = THREE.MathUtils.randFloatSpread(500);
-          positions[p * 3 + 1] = THREE.MathUtils.randFloat(0, 300 + FLOOR);
-          positions[p * 3 + 2] = THREE.MathUtils.randFloatSpread(500);
+          positions[p * 3] = THREE.MathUtils.randFloatSpread(500)
+          positions[p * 3 + 1] = THREE.MathUtils.randFloat(0, 300 + FLOOR)
+          positions[p * 3 + 2] = THREE.MathUtils.randFloatSpread(500)
         }
 
-        var pointsGeo = new THREE.BufferGeometry();
-        pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        var pointsGeo = new THREE.BufferGeometry()
+        pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
 
         var pointsMat = new THREE.PointsMaterial({
           color: 0x7a5d43,
           size: 2,
-        });
+        })
 
-        points = new THREE.Points(pointsGeo, pointsMat);
-        scene.add(points);
+        points = new THREE.Points(pointsGeo, pointsMat)
+        scene.add(points)
 
         // ------------------------------------------------------------
 
         // Sprites / Hieroglyphs
 
         // var map = textureLoader.load('textures/eye-of-horus.png');
-        var map = textureLoader.load('textures/hieroglyphs.png');
+        var map = textureLoader.load('textures/hieroglyphs.png')
         var material = new THREE.SpriteMaterial({
           map: map,
           color: 0xffffff,
           fog: true,
           transparent: true,
           opacity: 0.5,
-        });
-        sprite = new THREE.Sprite(material);
-        sprite.scale.setScalar(80);
-        sprite.position.set(50, 80, 50);
-        scene.add(sprite);
+        })
+        sprite = new THREE.Sprite(material)
+        sprite.scale.setScalar(80)
+        sprite.position.set(50, 80, 50)
+        scene.add(sprite)
 
         // ------------------------------------------------------------
 
         // Sand / Ground
 
-        var sandColor = textureLoader.load('textures/sand-color.jpg');
-        sandColor.wrapS = sandColor.wrapT = THREE.RepeatWrapping;
-        sandColor.repeat.set(8, 8);
+        var sandColor = textureLoader.load('textures/sand-color.jpg')
+        sandColor.wrapS = sandColor.wrapT = THREE.RepeatWrapping
+        sandColor.repeat.set(8, 8)
         var sandMat = new THREE.MeshLambertMaterial({
           color: 0xcfbb9a,
           map: sandColor,
-        });
+        })
 
-        var sandGeo = new THREE.PlaneGeometry(4096, 4096, 1, 1);
+        var sandGeo = new THREE.PlaneGeometry(4096, 4096, 1, 1)
 
-        var sand = new THREE.Mesh(sandGeo, sandMat);
-        scene.add(sand);
-        sand.rotation.x = -Math.PI / 2;
-        sand.position.y = FLOOR;
+        var sand = new THREE.Mesh(sandGeo, sandMat)
+        scene.add(sand)
+        sand.rotation.x = -Math.PI / 2
+        sand.position.y = FLOOR
 
         // ------------------------------------------------------------
 
@@ -323,9 +324,9 @@
         const colorMap = textureLoader.load('models/pyramid-color.jpg')
         const normalMap = textureLoader.load('models/pyramid-normal.jpg')
         const specMap = textureLoader.load('models/pyramid-spec.jpg')
-        colorMap.flipY = false;
-        normalMap.flipY = false;
-        specMap.flipY = false;
+        colorMap.flipY = false
+        normalMap.flipY = false
+        specMap.flipY = false
 
         const baseMaterial = new THREE.MeshPhongMaterial({
           color: new THREE.Color().setRGB(0.6, 0.6, 0.6),
@@ -335,7 +336,7 @@
           specularMap: specMap,
           specular: 0xffffff,
           shininess: 7,
-          side: THREE.DoubleSide
+          side: THREE.DoubleSide,
         })
 
         const speakerMaterial = new THREE.MeshPhongMaterial({
@@ -348,46 +349,46 @@
           color: new THREE.Color().setRGB(0.603, 0.412, 0.215),
           specular: 0xffffff,
           shininess: 10,
-          side: THREE.DoubleSide
+          side: THREE.DoubleSide,
         })
 
         // model
 
-        const gltf = gltfLoader.load('models/pyramid.glb', function(gltf) {
-          pyramid = gltf.scene.children[0];
-          pyramid.position.y = FLOOR;
-          scene.add(pyramid);
+        const gltf = gltfLoader.load('models/pyramid.glb', function (gltf) {
+          pyramid = gltf.scene.children[0]
+          pyramid.position.y = FLOOR
+          scene.add(pyramid)
 
-          var pLight2 = new THREE.PointLight(0x00ffcc, 4, 280, 0.1);
-          pLight2.position.set(0, 260, 0);
-          pyramid.add(pLight2);
+          var pLight2 = new THREE.PointLight(0x00ffcc, 4, 280, 0.1)
+          pLight2.position.set(0, 260, 0)
+          pyramid.add(pLight2)
 
           // var plh2 = new THREE.PointLightHelper( pLight2, 50 );
           // scene.add( plh2 );
 
           pyramid.traverse(function (obj) {
             if (obj.name.startsWith('speaker')) {
-              obj.material = speakerMaterial;
+              obj.material = speakerMaterial
             }
-          });
+          })
 
-          var base = pyramid.getObjectByName('pyramidBase');
-          base.material = baseMaterial;
+          var base = pyramid.getObjectByName('pyramidBase')
+          base.material = baseMaterial
 
-          var borders = pyramid.getObjectByName('borders');
-          borders.material = bordersMaterial;
-          borders.geometry = LoopSubdivision.modify(borders.geometry, 1);
+          var borders = pyramid.getObjectByName('borders')
+          borders.material = bordersMaterial
+          borders.geometry = LoopSubdivision.modify(borders.geometry, 1)
 
           // --------------------------------------------------------
 
           // top
 
-          var pyramidTop = pyramid.getObjectByName('pyramidTop');
-          pyramidTop.material = baseMaterial;
+          var pyramidTop = pyramid.getObjectByName('pyramidTop')
+          pyramidTop.material = baseMaterial
 
-          var pLight = new THREE.PointLight(0x00ffcc, 4, 180, 0.1);
-          pLight.position.y = -26;
-          pyramidTop.add(pLight);
+          var pLight = new THREE.PointLight(0x00ffcc, 4, 180, 0.1)
+          pLight.position.y = -26
+          pyramidTop.add(pLight)
 
           // var plh = new THREE.PointLightHelper( pLight, 50 );
           // scene.add( plh );
@@ -395,100 +396,100 @@
           // var ah = new THREE.AxesHelper( 50 );
           // pyramidTop.add( ah );
 
-          pyramidTop.position.y += 3;
+          pyramidTop.position.y += 3
 
           var tween = new TWEEN.Tween(pyramidTop.position)
             .to({ y: pyramidTop.position.y + 15 }, 1500)
-            .easing(TWEEN.Easing.Cubic.InOut);
+            .easing(TWEEN.Easing.Cubic.InOut)
 
           var tween2 = new TWEEN.Tween(pyramidTop.position)
             .to({ y: pyramidTop.position.y }, 1500)
-            .easing(TWEEN.Easing.Cubic.InOut);
+            .easing(TWEEN.Easing.Cubic.InOut)
 
-          tween.chain(tween2);
-          tween2.chain(tween);
-          tween.start();
+          tween.chain(tween2)
+          tween2.chain(tween)
+          tween.start()
 
           // --------------------------------------------------------
 
           // speakers
 
           for (var i = 1; i <= 8; i++) {
-            var speaker = pyramid.getObjectByName('speaker' + i);
-            speaker.material = speaker.material.clone();
-            speaker.geometry = LoopSubdivision.modify(speaker.geometry, 1);
+            var speaker = pyramid.getObjectByName('speaker' + i)
+            speaker.material = speaker.material.clone()
+            speaker.geometry = LoopSubdivision.modify(speaker.geometry, 1)
 
             // assign sound to speaker
 
-            var sound;
+            var sound
             switch (i) {
               // front : back :
               case 1:
               case 5:
-                sound = sounds[0];
-                break;
+                sound = sounds[0]
+                break
               case 2:
               case 6:
-                sound = sounds[1];
-                break;
+                sound = sounds[1]
+                break
               case 3:
               case 7:
-                sound = sounds[2];
-                break;
+                sound = sounds[2]
+                break
               case 4:
               case 8:
-                sound = sounds[3];
-                break;
+                sound = sounds[3]
+                break
 
               default:
-                sound = sounds[0];
-                break;
+                sound = sounds[0]
+                break
             }
 
-            speaker.userData.sound = sound;
+            speaker.userData.sound = sound
 
             // -------------------------------
 
             // direction / axis / face normal of pyramid base side
 
-            var normal = new THREE.Vector3(0.6457077325259278, 0.40832318480986296, 0.6452392586498092);
+            var normal = new THREE.Vector3(0.6457077325259278, 0.40832318480986296, 0.6452392586498092)
 
-            normal.x *= speaker.position.x > 0 ? 1 : -1;
-            normal.z *= speaker.position.z > 0 ? 1 : -1;
+            normal.x *= speaker.position.x > 0 ? 1 : -1
+            normal.z *= speaker.position.z > 0 ? 1 : -1
 
             // var arrow = new THREE.ArrowHelper(normal, speaker.position, 100, 0xff0000);
             // pyramid.add( arrow );
 
             // ------------------------------
 
-            var origin = (speaker.userData.origin = new THREE.Group());
-            origin.position.copy(speaker.position);
+            var origin = (speaker.userData.origin = new THREE.Group())
+            origin.position.copy(speaker.position)
 
-            var target1 = (speaker.userData.target1 = new THREE.Group());
-            target1.position.copy(speaker.position);
-            target1.translateOnAxis(normal, 4);
+            var target1 = (speaker.userData.target1 = new THREE.Group())
+            target1.position.copy(speaker.position)
+            target1.translateOnAxis(normal, 4)
 
-            var target2 = (speaker.userData.target2 = new THREE.Group());
-            target2.position.copy(speaker.position);
-            target2.translateOnAxis(normal, -2);
+            var target2 = (speaker.userData.target2 = new THREE.Group())
+            target2.position.copy(speaker.position)
+            target2.translateOnAxis(normal, -2)
           }
 
           // ---------------------------------------------------
 
-          document.addEventListener('mousemove', mousemove, false);
-          document.addEventListener('mousedown', mousedown, false);
-          document.addEventListener('mouseup', mouseup, false);
+          document.addEventListener('mousemove', mousemove, false)
+          document.addEventListener('mousedown', mousedown, false)
+          document.addEventListener('mouseup', mouseup, false)
 
-          document.addEventListener('touchstart', mousedown, false);
-          document.addEventListener('touchend', mouseup, false);
-        });
+          document.addEventListener('touchstart', mousedown, false)
+          document.addEventListener('touchend', mouseup, false)
+        })
 
         // --------------------------------------------------------------
 
-        var soundFiles = ['Ab', 'Eb', 'A', 'E'];
+        var soundFiles = ['Ab', 'Eb', 'A', 'E']
         for (var i = 0; i < soundFiles.length; i++) {
-          var sound = new Sound(['sounds/square/' + soundFiles[i] + '.mp3']);
-          sounds.push(sound);
+          var sound = new Sound(['sounds/square/' + soundFiles[i] + '.mp3'])
+          sounds.push(sound)
         }
 
         // --------------------------------------------------------
@@ -515,132 +516,132 @@
 
         //
 
-        window.addEventListener('resize', resize, false);
+        window.addEventListener('resize', resize, false)
       }
 
       // --------------------------------------------------------
 
       function resize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
       }
 
       function mousemove(event) {
-        event.preventDefault();
+        event.preventDefault()
 
-        var e = (event.touches && event.touches[0]) || event;
+        var e = (event.touches && event.touches[0]) || event
 
         // mouse x and y are between -1 and 1 (normalized?)
-        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
 
-        findIntersections();
+        findIntersections()
       }
 
       function speakerActivated(speaker) {
-        speaker.userData.sound.play();
+        speaker.userData.sound.play()
 
         var tween1 = new TWEEN.Tween(speaker.position)
           .to(speaker.userData.target1.position, 60)
-          .easing(TWEEN.Easing.Cubic.Out);
+          .easing(TWEEN.Easing.Cubic.Out)
 
         var tween2 = new TWEEN.Tween(speaker.position)
           .to(speaker.userData.target2.position, 60)
           .delay(60)
-          .easing(TWEEN.Easing.Cubic.In);
+          .easing(TWEEN.Easing.Cubic.In)
 
         var tween3 = new TWEEN.Tween(speaker.position)
           .to(speaker.userData.origin.position, 60)
           .delay(60)
-          .easing(TWEEN.Easing.Cubic.Out);
+          .easing(TWEEN.Easing.Cubic.Out)
 
-        tween1.chain(tween2);
-        tween2.chain(tween3);
-        tween1.start();
+        tween1.chain(tween2)
+        tween2.chain(tween3)
+        tween1.start()
       }
 
       function mousedown(event) {
-        event.preventDefault();
+        event.preventDefault()
 
-        mousemove(event);
+        mousemove(event)
 
-        var intersects = raycaster.intersectObjects(pyramid.children);
+        var intersects = raycaster.intersectObjects(pyramid.children)
 
         if (intersects.length > 0) {
-          SELECTED = intersects[0].object;
+          SELECTED = intersects[0].object
 
           if (SELECTED.name.startsWith('speaker')) {
-            controls.enabled = false;
-            speakerActivated(SELECTED);
+            controls.enabled = false
+            speakerActivated(SELECTED)
           }
         }
       }
 
       function mouseup(event) {
-        event.preventDefault();
+        event.preventDefault()
 
-        controls.enabled = true;
+        controls.enabled = true
 
         if (INTERSECTED) {
-          SELECTED = null;
+          SELECTED = null
         }
       }
 
       function findIntersections() {
-        raycaster.setFromCamera(mouse, camera);
+        raycaster.setFromCamera(mouse, camera)
 
-        var intersects = raycaster.intersectObjects(pyramid.children);
+        var intersects = raycaster.intersectObjects(pyramid.children)
 
         if (intersects.length > 0) {
           if (INTERSECTED != intersects[0].object) {
             if (INTERSECTED) {
-              INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-              renderer.domElement.style.cursor = 'auto';
+              INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex)
+              renderer.domElement.style.cursor = 'auto'
             }
 
-            INTERSECTED = intersects[0].object;
+            INTERSECTED = intersects[0].object
 
             // console.log(INTERSECTED.name);
 
             // if ( INTERSECTED.name.indexOf('speaker') >= 0 ) {
             if (INTERSECTED.name.startsWith('speaker')) {
-              INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-              INTERSECTED.material.emissive.setHex(0x004f3f);
-              renderer.domElement.style.cursor = 'pointer';
+              INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex()
+              INTERSECTED.material.emissive.setHex(0x004f3f)
+              renderer.domElement.style.cursor = 'pointer'
             }
           }
         } else {
           if (INTERSECTED) {
-            INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-            renderer.domElement.style.cursor = 'auto';
+            INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex)
+            renderer.domElement.style.cursor = 'auto'
           }
 
-          INTERSECTED = null;
+          INTERSECTED = null
         }
       }
 
       //
 
       function loop() {
-        requestAnimationFrame(loop);
+        requestAnimationFrame(loop)
 
-        points.rotation.y += 0.005;
+        points.rotation.y += 0.005
 
-        TWEEN.update();
-        controls.update();
+        TWEEN.update()
+        controls.update()
 
-        renderer.render(scene, camera);
+        renderer.render(scene, camera)
       }
 
       window.addEventListener('keydown', function (e) {
         // play note and speaker animation
         // - move into mesh.blast() function on speakers
-        if (e.keyCode == 83) speakerActivated(scene.getObjectByName('speaker4')); // s
-        if (e.keyCode == 81) speakerActivated(scene.getObjectByName('speaker1')); // q
-        if (e.keyCode == 65) speakerActivated(scene.getObjectByName('speaker2')); // a
-        if (e.keyCode == 87) speakerActivated(scene.getObjectByName('speaker3')); // w
-      });
+        if (e.keyCode == 83) speakerActivated(scene.getObjectByName('speaker4')) // s
+        if (e.keyCode == 81) speakerActivated(scene.getObjectByName('speaker1')) // q
+        if (e.keyCode == 65) speakerActivated(scene.getObjectByName('speaker2')) // a
+        if (e.keyCode == 87) speakerActivated(scene.getObjectByName('speaker3')) // w
+      })
 
       // Ideas:
       // Egyptian Hieroglyph Iconography
