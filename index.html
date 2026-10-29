@@ -48,13 +48,6 @@
         justify-content: center;
       }
 
-      #webglmessage {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        margin-left: -200px !important;
-      }
-
       #home {
         color: #fff;
         position: absolute;
@@ -93,8 +86,9 @@
         "imports": {
           "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
           "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
-          "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm",
-          "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.5/build/index.module.js"
+          "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.21.0/+esm",
+          "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.5/build/index.module.js",
+          "tone": "https://cdn.jsdelivr.net/npm/tone@15.1.22/+esm"
         }
       }
     </script>
@@ -105,11 +99,19 @@
       import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
       import { LoopSubdivision } from 'three-subdivide'
       import TWEEN from 'three/addons/libs/tween.module.js'
-      // import { GUI } from 'lil-gui'
+      import * as Tone from 'tone'
+      import { GUI } from 'lil-gui'
 
       if (new URLSearchParams(window.location.search).has('embed')) {
         document.getElementById('home').hidden = true
       }
+
+      var gui = new GUI()
+
+      // show gui on local, hide on prod
+      const local = ['localhost', '192', '127']
+      const isLocal = local.some((item) => location.hostname.includes(item))
+      if (!isLocal) gui.hide()
 
       var container
 
@@ -120,8 +122,6 @@
       var points
       var sprite
 
-      var sounds = []
-
       var mouse = new THREE.Vector2()
       var INTERSECTED, SELECTED
       var raycaster = new THREE.Raycaster()
@@ -130,20 +130,15 @@
 
       // ---------------------------------------------
 
-      var Sound = function (sources) {
-        this.audio = document.createElement('audio')
-
-        for (var i = 0; i < sources.length; i++) {
-          this.source = document.createElement('source')
-          this.source.src = sources[i]
-          this.audio.appendChild(this.source)
-        }
-      }
-
-      Sound.prototype.play = function () {
-        this.audio.load()
-        this.audio.play()
-      }
+      var synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: {
+          attack: 0.01,
+          decay: 0.15,
+          sustain: 0.2,
+          release: 0.8,
+        },
+      }).toDestination()
 
       // ---------------------------------------------
 
@@ -419,34 +414,36 @@
             speaker.material = speaker.material.clone()
             speaker.geometry = LoopSubdivision.modify(speaker.geometry, 1)
 
-            // assign sound to speaker
+            // assign sounds/notes to speaker
+            // major 7th chord
 
-            var sound
+            let note
+
             switch (i) {
               // front : back :
               case 1:
               case 5:
-                sound = sounds[0]
+                note = 'C3'
                 break
               case 2:
               case 6:
-                sound = sounds[1]
+                note = 'E2'
                 break
               case 3:
               case 7:
-                sound = sounds[2]
+                note = 'G3'
                 break
               case 4:
               case 8:
-                sound = sounds[3]
+                note = 'B2'
                 break
 
               default:
-                sound = sounds[0]
+                note = 'C2'
                 break
             }
 
-            speaker.userData.sound = sound
+            speaker.userData.note = note
 
             // -------------------------------
 
@@ -476,41 +473,36 @@
 
           // ---------------------------------------------------
 
-          document.addEventListener('mousemove', mousemove, false)
-          document.addEventListener('mousedown', mousedown, false)
-          document.addEventListener('mouseup', mouseup, false)
+          renderer.domElement.addEventListener('mousemove', mousemove, false)
+          renderer.domElement.addEventListener('mousedown', mousedown, false)
+          renderer.domElement.addEventListener('mouseup', mouseup, false)
 
-          document.addEventListener('touchstart', mousedown, false)
-          document.addEventListener('touchend', mouseup, false)
+          renderer.domElement.addEventListener('touchstart', mousedown, false)
+          renderer.domElement.addEventListener('touchend', mouseup, false)
         })
 
         // --------------------------------------------------------------
 
-        var soundFiles = ['Ab', 'Eb', 'A', 'E']
-        for (var i = 0; i < soundFiles.length; i++) {
-          var sound = new Sound(['sounds/square/' + soundFiles[i] + '.mp3'])
-          sounds.push(sound)
+        const config = {
+          oscillator: 'triangle',
+          spriteScale: sprite.scale.x,
         }
 
-        // --------------------------------------------------------
+        gui.add(config, 'oscillator', ['square', 'triangle', 'sawtooth', 'sine']).onChange(function (val) {
+          synth.set({ oscillator: { type: val } })
+        })
 
-        // var gui = new GUI();
+        gui.add(config, 'spriteScale', 20, 200).onChange(function (val) {
+          sprite.scale.setScalar(val)
+        })
 
-        // var opts = {
-        // 	spriteScale: sprite.scale.x
-        // };
+        gui.add(camera, 'fov', 10, 135).onChange(function () {
+          camera.updateProjectionMatrix()
+        })
 
-        // gui.add(opts, 'spriteScale', 20, 200).onChange(function(val){
-        // 	sprite.scale.setScalar(val);
-        // });
-        // gui.add(camera, 'fov', 10, 135).onChange(function(){
-        // 	camera.updateProjectionMatrix();
-        // });
-
-        // var f1 = gui.addFolder('fog');
-        // f1.add(scene.fog, 'near', 1, 1000);
-        // f1.add(scene.fog, 'far', 500, 1500);
-        // f1.open();
+        var f1 = gui.addFolder('fog')
+        f1.add(scene.fog, 'near', 1, 1000)
+        f1.add(scene.fog, 'far', 500, 1500)
 
         // --------------------------------------------------------
 
@@ -539,8 +531,9 @@
         findIntersections()
       }
 
-      function speakerActivated(speaker) {
-        speaker.userData.sound.play()
+      async function speakerActivated(speaker) {
+        await Tone.start()
+        synth.triggerAttackRelease(speaker.userData.note, '16n')
 
         var tween1 = new TWEEN.Tween(speaker.position)
           .to(speaker.userData.target1.position, 60)
@@ -634,14 +627,20 @@
         renderer.render(scene, camera)
       }
 
-      window.addEventListener('keydown', function (e) {
-        // play note and speaker animation
-        // - move into mesh.blast() function on speakers
-        if (e.keyCode == 83) speakerActivated(scene.getObjectByName('speaker4')) // s
-        if (e.keyCode == 81) speakerActivated(scene.getObjectByName('speaker1')) // q
-        if (e.keyCode == 65) speakerActivated(scene.getObjectByName('speaker2')) // a
-        if (e.keyCode == 87) speakerActivated(scene.getObjectByName('speaker3')) // w
-      })
+      window.addEventListener(
+        'keydown',
+        function (e) {
+          // play note and speaker animation
+          // - move into mesh.blast() function on speakers?
+          if (e.key === 's') speakerActivated(scene.getObjectByName('speaker4'))
+          if (e.key === 'q') speakerActivated(scene.getObjectByName('speaker1'))
+          if (e.key === 'a') speakerActivated(scene.getObjectByName('speaker2'))
+          if (e.key === 'w') speakerActivated(scene.getObjectByName('speaker3'))
+
+          if (e.key === 'h') gui._hidden ? gui.show() : gui.hide()
+        },
+        true
+      )
 
       // Ideas:
       // Egyptian Hieroglyph Iconography
